@@ -1,0 +1,42 @@
+---
+title: "machine learning_assignment1"
+author: "Pravalika"
+date: "2022-09-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#import dataset and print 
+```{r}
+input<-read.csv("IRIS.csv")
+input
+```
+
+#to print first and last of the dataset
+```{r}
+head(input)
+tail(input)
+```
+
+
+#to print summary of the dataset like mean,median,mode
+```{r}
+summary(input)
+```
+
+#fit used to store two quantitative variables and print the data
+```{r}
+fit<-lm(sepal_length ~ petal_length,data=input)
+fit
+```
+
+
+#to print scatterplot and between the two variables and  adds one or more straight lines through the current plot.
+```{r}
+plot(sepal_length ~ petal_length,data=input,col="blue",main="sepal length vs petal length")
+abline(fit,col="green")
+```
+
