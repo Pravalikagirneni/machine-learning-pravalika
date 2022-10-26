@@ -1,0 +1,153 @@
+---
+title: "FML ASSIGNMENT 2"
+author: "pravalika"
+date: "2022-10-26"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Installing Required packages,Calling a library and loading the dataset universal bank data csv file.
+```{r }
+#install.packages("tidyverse")
+library(tidyverse)
+#install.packages("reshape")
+library(reshape)
+#install.packages("caret")
+library(caret)
+#install.packages("e1071")
+library(e1071)
+UB<- read_csv("C:/Users/girne/Downloads/UniversalBank - Copy.csv")
+head(UB)
+tail(UB)
+colnames(UB)
+
+```
+#Transforming data into factors (categorical).
+
+```{r}
+UB$`Personal Loan` = as.factor(UB$`Personal Loan`)
+UB$Online = as.factor(UB$Online)
+UB$CreditCard = as.factor(UB$CreditCard)
+
+```
+#Spliting the data into two the 60% of data in training set and     40% into validation set
+```{r}
+set.seed(456)
+UB.train.data <- sample(row.names(UB), 0.6*dim(UB)[1]) # 60 % training
+UB.valid.data <- setdiff(row.names(UB), UB.train.data) # 40 % validation
+UB.train <- UB[UB.train.data, ] # assigning the UB.train.data into data frame
+UB.valid <- UB[UB.valid.data, ] # assigning the validation index into data frame
+train <- UB[UB.train.data, ] # Duplicating the data frame UB.train
+valid = UB[UB.train.data,] # Duplicating the data frame UB.valid
+
+```
+
+#A. Create a pivot table for the training data with Online as a column variable, CC as a row variable, and Loan as a secondary row variable. The values inside the table should convey the count. In R use functions melt() and cast(), or function table().
+
+Pivot table
+```{r}
+#install.packages("reshape2")
+library(reshape2)
+melt = melt(train,id=c("CreditCard","Personal Loan"),variable= "Online")# to organize the data
+cast = dcast(melt,CreditCard+`Personal Loan`~Online) # dcast is the process of turning online, personal loan, and credit card data into pivot tables.
+cast[,c(1,2,3,14)] # Casting column number 14: Personal loan, ID, and credit card, respectively
+
+```
+
+#B. Consider the task of classifying a customer who owns a bank credit card and is actively using online banking services. Looking at the pivot table, what is the probability that this customer will accept the loan offer? [This is the probability of loan acceptance (Loan = 1) conditional on having a bank credit card (CC = 1) and being an active user of online banking services (Online = 1)].
+```{r}
+UB.Loan.CC1 <- 89/3000#According to the pivot table, the value for Loan is 89, and the value for CC is 1. and 3000 is the total of 1917 + 200 + 794 + 89 = 3000.
+UB.Loan.CC1 # which is 29 %.
+
+```
+#C. Create two separate pivot tables for the training data. One will have Loan (rows) as a function of Online (columns) and the other will have Loan (rows) as a function of CC.
+```{r}
+melt1 = melt(train,id=c("Personal Loan"),variable = "Online") # Melting Personal loan and Online data into pivot table
+melt2 = melt(train,id=c("CreditCard"),variable = "Online") # CREDIT CARD DATA MELTING WITH REFERENCE TO ONLINE
+cast1 =dcast(melt1,`Personal Loan`~Online) # Casting Personal loan and online values
+cast2=dcast(melt2,CreditCard~Online) # Casting Personal loan and online values
+UB.Loanonline=cast1[,c(1,13)]
+UB.LoanCC = cast2[,c(1,14)]
+UB.Loanonline #shows the number of personal loans in reference to online
+UB.LoanCC # shows the number of credit cards in reference to internet.
+
+```
+D. Compute the following quantities [P (A | B) means “the probability of A given B”]:
+1.P (CC = 1 | Loan = 1) (the proportion of credit card holders among the loan acceptors)
+2.P(Online=1|Loan=1)
+3.P (Loan = 1) (the proportion of loan acceptors)
+4.P(CC=1|Loan=0)
+5.P(Online=1|Loan=0)
+6.P(Loan=0)
+
+```{r}
+table(train[,c(14,10)])   # creating a pivot table with the columns 14 and 10 representing personal loans and credit cards from training
+table(train[,c(13,10)])   # Creating a pivot table for column 13 and 10 which is online and personal loan from training
+table(train[,c(10)])     # Personal loan pivot table There are 2725 and 275 from training, respectively.
+
+```
+1. P(CC = 1 | Loan = 1)
+```{r}
+UB.CCUB.Loan1 = 89/(89+200)   # We can obtain the CC= 1 and Loan = 1 values by referring to the above pivot table, which is 89 divided by CC = 0 and PL 1 200 .
+UB.CCUB.Loan1
+
+
+```
+
+2. P(Online=1|Loan=1)
+```{r}
+UB.ONUB.Loan1 =177/(177+112) # We can get the online = 1 and loan = 1 values from the pivot table above.
+UB.ONUB.Loan1
+
+```
+3. P(Loan = 1)
+```{r}
+UB.Loan1 =289/(289+2711) # By referring the above pivot table we can get the Loan = 1
+UB.Loan1
+
+```
+4. P(CC=1|Loan=0)
+```{r}
+UB.CCLoan.01= 794/(794+1917) #Using the pivot table above, we can obtain the CC = 1 and Loan = 0 values / CC 0 and PL 0 values.
+UB.CCLoan.01
+
+```
+5. P(Online=1|Loan=0)
+```{r}
+UB.ON1.L0= 1665/(1665+1046) # We can get the online = 1 and loan = 0 values from the pivot table above.
+UB.ON1.L0
+
+
+```
+6. P(Loan=0)
+```{r}
+UB.Loan0= 2711/(2711+289) # We can obtain the Loan = 0 values by  the pivot table above.
+UB.Loan0
+
+```
+
+E. Use the quantities computed above to compute the naive Ba1 probability P(Loan = 1 | CC = 1, Online = 1).
+```{r}
+UB.Naivebayes = ((89/(89+200))*(177/(177+112))*(289/(289+2711)))/(((89/(89+200))*(177/(177+112))*(289/(289+2711)))+((794/(794+1917))*(1665/(1665+1046))*2711/(2711+289)))
+UB.Naivebayes # 100 % is the probability
+
+
+```
+
+F. Compare this value with the one obtained from the pivot table in (b). Which is a more accurate estimate? 9.05% are very similar to the 9.7% the difference between the exact method and the naive-baise method is the exact method would need the the exact same independent variable classifications to predict, where the naive bayes method does not.
+
+```{r}
+library(caret)
+library(e1071)
+UB.nb.train = UB.train[,c(10,13,14)] # Personal loan, credit card, and online column training dataUB.nb.test =UB.valid[,c(10,13,14)] # testing set data from the same columns.
+UB.naivebayes.1 = naiveBayes(`Personal Loan`~.,data=UB.nb.train) #Using the naivebayes algorithm to personal loan and training data.
+UB.naivebayes.1
+
+```
+
+
