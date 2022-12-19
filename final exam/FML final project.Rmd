@@ -1,0 +1,68 @@
+---
+title: "FML FINAL PROJECT"
+author: "PRAVALIKA"
+date: "2022-12-17"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##calling the required library
+```{r}
+library(factoextra)
+```
+
+## Reading the csv file
+```{r}
+Mall_Data<- read.csv("C:/Users/girne/Downloads/Mall_Customers.csv")
+
+```
+
+##printing the top portion data file
+```{r}
+head(Mall_Data)
+```
+
+##Taking the quantitative variables in order to scale.
+```{r}
+ 
+Mall_Data1<-Mall_Data[,4:5]
+head(Mall_Data1)
+```
+
+
+#Finding the value of K-means using unsupervised learning. Wanted to use the simplest, but most accurate method possible. 
+```{r} 
+fviz_nbclust(Mall_Data1,kmeans,method="wss")+geom_vline(xintercept = 2,linetype= 5)+labs(subtitle = "Elbow Method")
+fviz_nbclust(Mall_Data1,kmeans,method ="silhouette") + labs (subtitle = "Silhouette Method")
+#Here, I will set the seed for kmeans. 
+set.seed(456)
+k5<-kmeans(Mall_Data1, centers = 2, nstart = 50)
+k5$centers
+#Thus, K= 5, meaning that there will be 5 clusters. 
+```
+
+```{r}
+#Clustering the data from .csv file. 
+Mall_Dataclus<-kmeans(Mall_Data1,5)
+
+Mall_Dataclus
+fviz_cluster(Mall_Dataclus,Mall_Data1)
+#Now, I will visualize the clusters. 
+ggplot(Mall_Data1, aes(x = Annual.Income..k..,y = Spending.Score..1.100.)) +geom_point(stat = "identity", aes(color=as.factor(Mall_Dataclus$cluster)))+ scale_color_discrete(name="k",breaks=c("1", "2", "3", "4", "5"),labels=c("Cluster1", "Cluster2","Cluster3", "Cluster4", "Cluster5"))+ ggtitle("Mall_Datacustomer Segmentation")
+
+
+#Thus, the following can be concluded:
+#Cluster 1 are Mall_Datacustomer who earn a medium annual income and have a medium annual spending rate. 
+#Cluster 2 Mall_Datacustomer who have a high annual income and a low annual spending rate. 
+#Cluster 3 costumers who have low annual incomes and a high annual spending rates.
+#Cluster 4 Mall_Datacustomer with high annual incomes and have high annual spending rates. 
+#Cluster 5 shows that Mall_Datacustomer with low annual incomes and low annual spending rates. 
+```
+
+
